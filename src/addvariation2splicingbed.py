@@ -12,7 +12,7 @@ HISTORY
 	01/09/2012 
 
 """
-from __future__ import print_function;
+
 import sys;
 import subprocess;
 import pydoc;

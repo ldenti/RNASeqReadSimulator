@@ -55,7 +55,6 @@ AUTHOR
 	Wei Li (li.david.wei AT gmail.com)
 """
 
-from __future__ import print_function
 import sys;
 import subprocess;
 import pydoc;

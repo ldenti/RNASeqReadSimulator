@@ -50,7 +50,7 @@ from Bio.SeqRecord import SeqRecord;
 # parser.add_argument('-f','--fill',default='A',help='Fill at the end of each read by the sequence seq, if the read is shorter than the read length. Default A (to simulate poly-A tails in RNA-Seq reads).');
 
 if len(sys.argv)<2:
-  print>>sys.stderr, (pydoc.render_doc(sys.modules[__name__]));
+  print(pydoc.render_doc(sys.modules[__name__]), file=sys.stderr)
   sys.exit();
 
 # analyzing parameters
@@ -65,7 +65,7 @@ for i in range(len(sys.argv)):
     if sys.argv[i]=='-b' or sys.argv[i]=='--seqerror':
       bline=0;
       tbweight=0;
-      print>>sys.stderr, ('Using pos bias file'+sys.argv[i+1]);
+      print('Using pos bias file'+sys.argv[i+1], file=sys.stderr)
       for lines in open(sys.argv[i+1]):
         bline=bline+1;
         if bline>100:
@@ -73,21 +73,21 @@ for i in range(len(sys.argv)):
         tbweight=float(lines.strip());
         posweight.append(tbweight);
       if len(posweight)!=100:
-        print>>sys.stderr, ('Error: the bias file should include at least 100 lines.');
+        print('Error: the bias file should include at least 100 lines.', file=sys.stderr)
         sys.exit();
     if sys.argv[i]=='-r' or sys.argv[i]=='--errorrate':
       errrate=float(sys.argv[i+1]);
       if errrate<0: # or errrate>1:
-        print>>sys.stderr, ('Error: the error rate should be between 0-1.');
+        print('Error: the error rate should be between 0-1.', file=sys.stderr)
         sys.exit();
-      print>>sys.stderr,('Error rate: '+str(errrate));
+      print('Error rate: '+str(errrate), file=sys.stderr)
     if sys.argv[i]=='-l' or sys.argv[i]=='--readlen':
       readlength=int(sys.argv[i+1]);
-      print>>sys.stderr,('Read length:'+str(readlength));
+      print('Read length:'+str(readlength), file=sys.stderr)
     if sys.argv[i]=='-f' or sys.argv[i]=='--fill':
       forcelength=True;
       filledseq=sys.argv[i+1];
-      print>>sys.stderr,('Force same read length with filled :'+(filledseq));
+      print('Force same read length with filled :'+(filledseq), file=sys.stderr)
     
 
 
@@ -95,7 +95,7 @@ for i in range(len(sys.argv)):
 rlenweight=[];
 if len(posweight)!=0:
   kweight=0;
-  for i in xrange(readlength):
+  for i in range(readlength):
     nfrac=i*100.0/readlength;
     lower=int(math.floor(nfrac));
     higher=int(math.ceil(nfrac));
@@ -133,11 +133,11 @@ for lines in fid:
   # update line counter
   nlines=nlines+1;
   if nlines %10000==1:
-    print>>sys.stderr,('Processing '+str(nlines)+' lines...');
+    print('Processing '+str(nlines)+' lines...', file=sys.stderr)
   # parse lines
   bedfield=lines.strip().split('\t');
   if len(bedfield)!=12:
-    print>>sys.stderr,('Error: incorrect number of fields at line %d (should be 12, observed %d)' % (nlines, len(bedfield)) );
+    print('Error: incorrect number of fields at line %d (should be 12, observed %d)' % (nlines, len(bedfield)), file=sys.stderr)
     continue;
   # clustering
   fieldrange=[int(bedfield[1]),int(bedfield[2])];
@@ -145,10 +145,10 @@ for lines in fid:
   exonlen=[int(x) for x in bedfield[10][:-1].split(',')];
   exonstart=[int(x)+fieldrange[0] for x in bedfield[11][:-1].split(',')];
   if not bedfield[0] in refkeys:
-    print>>sys.stderr,('Warning: '+bedfield[0]+ ' not in the reference. Ignore...' );
+    print('Warning: '+bedfield[0]+ ' not in the reference. Ignore...', file=sys.stderr)
     continue;
   if bedfield[0]!=prevchr:
-    print>>sys.stderr, ('Switching to %s ...' % bedfield[0]);
+    print('Switching to %s ...' % bedfield[0], file=sys.stderr)
     prevchr=bedfield[0];
     previndex=seqref[bedfield[0]];
   # extract sequences
@@ -164,10 +164,10 @@ for lines in fid:
   nmut=numpy.random.poisson(errrate);
   if nmut>0:
     newseq=thisseq.seq;
-    for n in xrange(nmut):
+    for n in range(nmut):
       if len(posweight)==0:
         # uniform distrib
-        modifyposition=random.choice(xrange(len(newseq)));
+        modifyposition=random.choice(range(len(newseq)));
       else:
         rchosen=random.random()*kweight;
         modifyposition=bisect.bisect_right(posweight,rchosen);
@@ -176,25 +176,25 @@ for lines in fid:
         topos=random.choice('ATGC');
         while topos==newseq[modifyposition]:
           topos=random.choice('ATGC');
-        print >>sys.stderr,('MUTATION at position '+str(modifyposition)+','+newseq[modifyposition]+'->'+topos);
-        # print >>sys.stderr,('SEQ:'+newseq);
+        print('MUTATION at position '+str(modifyposition)+','+newseq[modifyposition]+'->'+topos, file=sys.stderr)
+        # print('SEQ:'+newseq, file=sys.stderr)
         newseq=newseq[:modifyposition]+topos+newseq[(modifyposition+1):];
-        # print >>sys.stderr,('SEQ:'+newseq);
-    #print>>sys.stderr,('NMUTATION:'+str(nmut));
-    #print>>sys.stderr, (str(thisseq.seq));
-    #print>>sys.stderr,(newseq);
+        # print('SEQ:'+newseq, file=sys.stderr)
+    #print('NMUTATION:'+str(nmut), file=sys.stderr)
+    #print(str(thisseq.seq), file=sys.stderr)
+    #print(newseq, file=sys.stderr);
     thisseq.seq=newseq;
   # reverse-complement the sequence if it is on the negative strand
   if bedfield[5]=='-':
-    #print >>sys.stderr,('SEQ:'+thisseq.seq);
+    #print('SEQ:'+thisseq.seq, file=sys.stderr)
     thisseq.seq=thisseq.seq.reverse_complement();
-    #print >>sys.stderr,('RVCSEQ:'+thisseq.seq);
+    #print('RVCSEQ:'+thisseq.seq, file=sys.stderr)
   # write to record
   try:
     SeqIO.write(thisseq,ofid,'fasta');
   except ValueError:
-    print>>sys.stderr, ('Skip at line '+str(nlines)+', sequence object:');
-    print>>sys.stderr, (thisseq);
+    print('Skip at line '+str(nlines)+', sequence object:', file=sys.stderr);
+    print(thisseq, file=sys.stderr);
   
         
 
