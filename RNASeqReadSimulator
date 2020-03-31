@@ -1,0 +1,54 @@
+#!/bin/bash
+
+WD=$(pwd)/$(dirname $0)
+
+# Arguments
+REFERENCE=$1         # FASTA file
+GTF=$2               # GTF file (TODO: bed/gtf)
+FASTAFILE=$3         # Prefix if paired-end
+NREAD=$4             # Number of reads generated
+ERATE=0.01           # Error rate
+READLEN=100          # Read length
+PAIREDEND="200,20"   # The mean and std of spans for paired-end reads.
+
+BED=$(dirname ${GTF})/$(basename ${GTF} .gtf).bed
+${WD}/gtf2bed ${GTF} > ${BED}
+
+# Positional bias file
+POSBIAS=${WD}/aux_files/posbias
+# Read error position profile
+READERR=${WD}/aux_files/readerror
+# File for random expression level assignment
+RANDEXPLV=./tmp_rnaseq/explvprofile.txt
+
+if [ ! -d $(dirname ${RANDEXPLV}) ]
+then
+    mkdir $(dirname ${RANDEXPLV})
+fi
+
+# Commands to randomly assign weights to each transcript
+python3 ${SD}/src/genexplvprofile.py ${BED} > ${RANDEXPLV}
+
+# Simulate reads (output to STDOUT in BED format)
+# -e: weight of each transcript (default: uniform)
+# -n: number of reads to be generated (default 100000)
+# -b: positional bias file (default: uniform)
+# -l: read length (default: 32)
+# -o: output .bed file (default: STDOUT)
+# -p: paired-end settings
+
+CMD1="python3 ${WD}/src/gensimreads.py -n ${NREAD} -b ${POSBIAS} -l ${READLEN} ${BED}"
+# paired-end: CMD1="python3 ${SD}/src/gensimreads.py -n ${NREAD} -b ${POSBIAS} -l ${READLEN} -p ${PAIREDEND} ${BED}"
+
+# Convert BED file to fasta file
+# -b: positional error profile to be used (default: uniform)
+# -r: overall error rate (it specifies the mean of the Poisson distribution)
+# -l: read length (default: 75)
+# -f: fill at the end of each read by the sequence (default: seq)
+CMD2="python3 ${WD}/src/getseqfrombed.py -b ${READERR} -f A -r 0.01 -l ${READLEN} - ${REFERENCE}"
+
+# Execute two commands simultaneously
+${CMD1} | ${CMD2} > ${FASTAFILE}
+# Paired-end: ${CMD1} | ${CMD2} | ${WD}/src/splitfasta.py -o ${FASTAFILE}
+
+rm -rf $(dirname ${RANDEXPLV})
