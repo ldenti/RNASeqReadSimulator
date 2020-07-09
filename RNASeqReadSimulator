@@ -45,7 +45,7 @@ CMD1="python3 ${WD}/src/gensimreads.py -n ${NREAD} -b ${POSBIAS} -l ${READLEN} $
 # -r: overall error rate (it specifies the mean of the Poisson distribution)
 # -l: read length (default: 75)
 # -f: fill at the end of each read by the sequence (default: seq)
-CMD2="python3 ${WD}/src/getseqfrombed.py -b ${READERR} -f A -r 0.01 -l ${READLEN} - ${REFERENCE}"
+CMD2="python3 ${WD}/src/getseqfrombed.py -b ${READERR} -f A -r ${ERATE} -l ${READLEN} - ${REFERENCE}"
 
 # Execute two commands simultaneously
 ${CMD1} | ${CMD2} > ${FASTAFILE}
