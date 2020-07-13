@@ -1,13 +1,13 @@
 #!/bin/bash
 
-WD=$(pwd)/$(dirname $0)
+WD=$(dirname $0)
 
 # Arguments
 REFERENCE=$1         # FASTA file
 GTF=$2               # GTF file (TODO: bed/gtf)
 FASTAFILE=$3         # Prefix if paired-end
 NREAD=$4             # Number of reads generated
-ERATE=0.01           # Error rate
+ERATE=0.02           # Error rate
 READLEN=100          # Read length
 PAIREDEND="200,20"   # The mean and std of spans for paired-end reads.
 
@@ -27,7 +27,7 @@ then
 fi
 
 # Commands to randomly assign weights to each transcript
-python3 ${SD}/src/genexplvprofile.py ${BED} > ${RANDEXPLV}
+python3 ${WD}/src/genexplvprofile.py ${BED} > ${RANDEXPLV}
 
 # Simulate reads (output to STDOUT in BED format)
 # -e: weight of each transcript (default: uniform)
@@ -38,7 +38,7 @@ python3 ${SD}/src/genexplvprofile.py ${BED} > ${RANDEXPLV}
 # -p: paired-end settings
 
 CMD1="python3 ${WD}/src/gensimreads.py -n ${NREAD} -b ${POSBIAS} -l ${READLEN} ${BED}"
-# paired-end: CMD1="python3 ${SD}/src/gensimreads.py -n ${NREAD} -b ${POSBIAS} -l ${READLEN} -p ${PAIREDEND} ${BED}"
+# paired-end: CMD1="python3 ${WD}/src/gensimreads.py -n ${NREAD} -b ${POSBIAS} -l ${READLEN} -p ${PAIREDEND} ${BED}"
 
 # Convert BED file to fasta file
 # -b: positional error profile to be used (default: uniform)
